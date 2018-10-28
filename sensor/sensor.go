@@ -1,3 +1,5 @@
+//go:generate mockgen -source=sensor.go -destination sensor_mock.go -package=sensor
+
 package sensor
 
 const (
