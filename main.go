@@ -1,17 +1,20 @@
 package main
 
 import (
+	"os"
+
 	"github.com/indiependente/motionbot/sensor"
 	"github.com/indiependente/motionbot/sensor/pir"
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	cfg := pir.SensorConfig{PinOut: "GPIO23"}
+	pin := os.Getenv("GPIOPIN")
+	cfg := pir.SensorConfig{PinOut: pin}
 	s := pir.NewSensor(cfg)
 	err := s.Setup()
 	if err != nil {
-		log.WithFields(log.Fields{"setup": err}).Fatal("ERROR")
+		log.WithFields(log.Fields{"error": err}).Fatal("setup")
 	}
 	outCh := s.Read()
 
