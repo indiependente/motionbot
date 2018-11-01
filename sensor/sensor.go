@@ -5,6 +5,8 @@ package sensor
 const (
 	// TYPETEXT represents a text Output message format.
 	TYPETEXT = "TEXT"
+	// TYPEIMAGE represents an image Output message format.
+	TYPEIMAGE = "IMAGE"
 )
 
 // Output is the output sent by the sensor.

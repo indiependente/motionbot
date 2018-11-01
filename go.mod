@@ -1,6 +1,7 @@
 module github.com/indiependente/motionbot
 
 require (
+	github.com/dhowden/raspicam v0.0.0-20150608033847-a5a975841994
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/golang/mock v1.1.1
 	github.com/pkg/errors v0.8.0

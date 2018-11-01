@@ -4,8 +4,16 @@ type BotConfig struct {
 	AllowedUsers []string
 }
 
+type MessageFormat string
+
+const (
+	TEXT  MessageFormat = "TEXT"
+	IMAGE MessageFormat = "IMAGE"
+	VIDEO MessageFormat = "VIDEO"
+)
+
 type Message struct {
-	Format string
+	Format MessageFormat
 	Data   []byte
 }
 

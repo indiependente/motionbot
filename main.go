@@ -4,9 +4,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/indiependente/motionbot/sensor"
+
 	"github.com/indiependente/motionbot/bot"
 	"github.com/indiependente/motionbot/bot/telegram"
-	"github.com/indiependente/motionbot/sensor"
+	"github.com/indiependente/motionbot/sensor/camera"
 	"github.com/indiependente/motionbot/sensor/pir"
 	log "github.com/sirupsen/logrus"
 )
@@ -22,10 +24,13 @@ func main() {
 	}
 	outCh := s.Read()
 
+	// camera setup
+	cam := &camera.NoIRCamera{}
+
 	// bot setup
 	token := os.Getenv("TOKEN")
 	allowedUsers := strings.Split(os.Getenv("ALLOWED_USERS"), ",")
-	botcfg := bot.BotConfig{allowedUsers}
+	botcfg := bot.BotConfig{AllowedUsers: allowedUsers}
 	tbot, err := telegram.NewBot(token)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Fatal("new bot")
@@ -41,8 +46,11 @@ func main() {
 	}
 
 	for m := range outCh {
-		if m.Format == sensor.TYPETEXT {
-			tbot.Send(bot.Message{Format: m.Format, Data: m.Data})
+		tbot.Send(bot.Message{Format: bot.MessageFormat(m.Format), Data: m.Data})
+		filename, err := cam.Picture()
+		if err != nil {
+			log.WithFields(log.Fields{"error": err}).Error("picture")
 		}
+		tbot.Send(bot.Message{Format: sensor.TYPEIMAGE, Data: []byte(filename)})
 	}
 }

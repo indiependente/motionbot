@@ -2,6 +2,8 @@ package telegram
 
 import (
 	"log"
+	"strconv"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/indiependente/motionbot/bot"
@@ -26,8 +28,13 @@ func NewBot(tok string) (*Bot, error) {
 }
 
 func (b *Bot) Setup(bc bot.BotConfig) error {
-	for _, u := range bc.AllowedUsers {
-		b.allowedUsers[u] = UserInfo{}
+	for _, usrid := range bc.AllowedUsers {
+		uid := strings.Split(usrid, ":")
+		cid, err := strconv.Atoi(uid[1])
+		if err != nil {
+			return errors.Wrapf(err, "Could not convert user %s chat id %s", uid[0], uid[1])
+		}
+		b.allowedUsers[uid[0]] = UserInfo{chatID: int64(cid)}
 	}
 	b.bot.Debug = true
 	return nil
@@ -47,11 +54,29 @@ func (b *Bot) Start() error {
 
 func (b *Bot) Send(m bot.Message) error {
 	for usr, usrinfo := range b.allowedUsers {
-		msg := tgbotapi.NewMessage(usrinfo.chatID, string(m.Data))
-		_, err := b.bot.Send(msg)
-		if err != nil {
-			return errors.Wrapf(err, "Could not send message to %s", usr)
+		switch m.Format {
+		case bot.TEXT:
+			msg := tgbotapi.NewMessage(usrinfo.chatID, string(m.Data))
+			_, err := b.bot.Send(msg)
+			if err != nil {
+				return errors.Wrapf(err, "Could not send text message to %s", usr)
+			}
+		case bot.IMAGE:
+			msg := tgbotapi.NewPhotoUpload(usrinfo.chatID, string(m.Data))
+			msg.Caption = string(m.Data)
+			_, err := b.bot.Send(msg)
+			if err != nil {
+				return errors.Wrapf(err, "Could not send photo message to %s", usr)
+			}
+		case bot.VIDEO:
+			msg := tgbotapi.NewVideoNoteUpload(usrinfo.chatID, 240, string(m.Data))
+			msg.Duration = 10
+			_, err := b.bot.Send(msg)
+			if err != nil {
+				return errors.Wrapf(err, "Could not send video note message to %s", usr)
+			}
 		}
+
 	}
 
 	return nil
@@ -71,32 +96,3 @@ func (b *Bot) updateHandler(updates <-chan tgbotapi.Update) {
 		log.Printf("[%s] %s", u.Message.From.UserName, u.Message.Text)
 	}
 }
-
-// func main() {
-// 	bot, err := tgbotapi.NewBotAPI("MyAwesomeBotToken")
-// 	if err != nil {
-// 		log.Panic(err)
-// 	}
-
-// 	bot.Debug = true
-
-// 	log.Printf("Authorized on account %s", bot.Self.UserName)
-
-// 	u := tgbotapi.NewUpdate(0)
-// 	u.Timeout = 60
-
-// 	updates, err := bot.GetUpdatesChan(u)
-
-// 	for update := range updates {
-// 		if update.Message == nil { // ignore any non-Message Updates
-// 			continue
-// 		}
-
-// 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-// 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-// 		msg.ReplyToMessageID = update.Message.MessageID
-
-// 		bot.Send(msg)
-// 	}
-// }
