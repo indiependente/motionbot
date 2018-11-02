@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/indiependente/motionbot/bot"
@@ -18,12 +17,15 @@ const (
 	notAllowedUserTemplate       = "%s You Shall Not Pass! 🧙‍♂️"
 )
 
+// UserInfo holds the information related to a user.
 type UserInfo struct {
 	username  string
 	firstName string
 	lastName  string
 	chatID    int64
 }
+
+// Bot represents a new Telegram bot.
 type Bot struct {
 	bot          *tgbotapi.BotAPI
 	allowedUsers map[int]UserInfo
@@ -32,6 +34,7 @@ type Bot struct {
 	camera       camera.Camera
 }
 
+// NewBot creates and returns a new bot.
 func NewBot(tok string) (*Bot, error) {
 	bot, err := tgbotapi.NewBotAPI(tok)
 	if err != nil {
@@ -40,6 +43,7 @@ func NewBot(tok string) (*Bot, error) {
 	return &Bot{bot, make(map[int]UserInfo), make(map[int]UserInfo), nil, nil}, nil
 }
 
+// NewBotWithCamera creates and returns a new bot with camera support.
 func NewBotWithCamera(tok string, cam camera.Camera) (*Bot, error) {
 	b, err := NewBot(tok)
 	if err != nil {
@@ -53,21 +57,20 @@ func (b *Bot) addCamera(cam camera.Camera) {
 	b.camera = cam
 }
 
-func (b *Bot) Setup(bc bot.BotConfig) error {
-	for _, usrid := range bc.AllowedUsers {
-		uids := strings.Split(usrid, ",")
-		for _, uid := range uids {
-			cid, err := strconv.Atoi(uid)
-			if err != nil {
-				return errors.Wrapf(err, "Could not convert user's chat id %s", uid)
-			}
-			b.allowedUsers[cid] = UserInfo{chatID: int64(cid)}
+// Setup populates the allowed users and turns on the debug.
+func (b *Bot) Setup(bc bot.Config) error {
+	for _, uid := range bc.AllowedUsers {
+		cid, err := strconv.Atoi(uid)
+		if err != nil {
+			return errors.Wrapf(err, "Could not convert user's chat id %s", uid)
 		}
-
+		b.allowedUsers[cid] = UserInfo{chatID: int64(cid)}
 	}
 	b.bot.Debug = true
 	return nil
 }
+
+// Start starts the bot.
 func (b *Bot) Start() error {
 	var err error
 	u := tgbotapi.NewUpdate(0)
@@ -81,6 +84,7 @@ func (b *Bot) Start() error {
 	return nil
 }
 
+// Send sends message m to all the active users.
 func (b *Bot) Send(m bot.Message) error {
 	for _, usrinfo := range b.activeUsers {
 		err := b.handleMessage(m, int(usrinfo.chatID))
@@ -91,6 +95,7 @@ func (b *Bot) Send(m bot.Message) error {
 	return nil
 }
 
+// SendTo sends message m to the user identified by chatID.
 func (b *Bot) SendTo(chatID int, m bot.Message) error {
 	return b.handleMessage(m, chatID)
 }

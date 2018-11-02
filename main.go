@@ -37,7 +37,7 @@ func main() {
 		log.WithFields(log.Fields{"error": err}).Fatal("new bot")
 	}
 
-	botcfg := bot.BotConfig{AllowedUsers: allowedUsers}
+	botcfg := bot.Config{AllowedUsers: allowedUsers}
 	err = tbot.Setup(botcfg)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Fatal("bot setup")
