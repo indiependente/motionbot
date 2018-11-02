@@ -4,10 +4,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/indiependente/motionbot/sensor"
-
 	"github.com/indiependente/motionbot/bot"
 	"github.com/indiependente/motionbot/bot/telegram"
+	"github.com/indiependente/motionbot/bot/video/muxer/ffmpeg"
 	"github.com/indiependente/motionbot/sensor/camera"
 	"github.com/indiependente/motionbot/sensor/pir"
 	log "github.com/sirupsen/logrus"
@@ -25,13 +24,13 @@ func main() {
 	outCh := s.Read()
 
 	// camera setup
-	cam := &camera.NoIRCamera{}
+	cam := &camera.NoIRCamera{ffmpeg.Muxer{Rate: 30}}
 
 	// bot setup
 	token := os.Getenv("TOKEN")
 	allowedUsers := strings.Split(os.Getenv("ALLOWED_USERS"), ",")
 	botcfg := bot.BotConfig{AllowedUsers: allowedUsers}
-	tbot, err := telegram.NewBot(token)
+	tbot, err := telegram.NewBotWithCamera(token, cam)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Fatal("new bot")
 	}
@@ -45,12 +44,7 @@ func main() {
 		log.WithFields(log.Fields{"error": err}).Fatal("bot start")
 	}
 
-	for m := range outCh {
+	for range outCh {
 		tbot.Send(bot.Message{Format: bot.MessageFormat(m.Format), Data: m.Data})
-		filename, err := cam.Picture()
-		if err != nil {
-			log.WithFields(log.Fields{"error": err}).Error("picture")
-		}
-		tbot.Send(bot.Message{Format: sensor.TYPEIMAGE, Data: []byte(filename)})
 	}
 }
