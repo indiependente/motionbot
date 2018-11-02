@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/dhowden/raspicam"
-	"github.com/indiependente/motionbot/bot/video/muxer"
+	"github.com/indiependente/motionbot/video/muxer"
 	"github.com/pkg/errors"
 )
 

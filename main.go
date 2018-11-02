@@ -6,9 +6,9 @@ import (
 
 	"github.com/indiependente/motionbot/bot"
 	"github.com/indiependente/motionbot/bot/telegram"
-	"github.com/indiependente/motionbot/bot/video/muxer/ffmpeg"
 	"github.com/indiependente/motionbot/sensor/camera"
 	"github.com/indiependente/motionbot/sensor/pir"
+	"github.com/indiependente/motionbot/video/muxer/ffmpeg"
 	log "github.com/sirupsen/logrus"
 )
 

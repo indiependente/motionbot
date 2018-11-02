@@ -6,10 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/indiependente/motionbot/sensor/camera"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/indiependente/motionbot/bot"
+	"github.com/indiependente/motionbot/sensor/camera"
 	"github.com/pkg/errors"
 )
 
