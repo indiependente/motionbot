@@ -24,17 +24,20 @@ func main() {
 	outCh := s.Read()
 
 	// camera setup
-	cam := &camera.NoIRCamera{ffmpeg.Muxer{Rate: 30}}
+	cam := &camera.NoIRCamera{
+		Muxer: ffmpeg.Muxer{Rate: 30},
+	}
 
 	// bot setup
 	token := os.Getenv("TOKEN")
 	allowedUsers := strings.Split(os.Getenv("ALLOWED_USERS"), ",")
-	botcfg := bot.BotConfig{AllowedUsers: allowedUsers}
+
 	tbot, err := telegram.NewBotWithCamera(token, cam)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Fatal("new bot")
 	}
 
+	botcfg := bot.Config{AllowedUsers: allowedUsers}
 	err = tbot.Setup(botcfg)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Fatal("bot setup")

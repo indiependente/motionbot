@@ -41,6 +41,7 @@ func (c *NoIRCamera) Picture() (string, error) {
 	return filename, nil
 }
 
+// Video records a 10 seconds video and returns the filename and an error.
 func (c *NoIRCamera) Video() (string, error) {
 	filename := time.Now().Format("02012006T150405") + ".h264"
 	f, err := os.Create(filename)

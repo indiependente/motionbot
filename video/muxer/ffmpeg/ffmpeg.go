@@ -17,10 +17,12 @@ const (
 	copyTypeParam  = "copy"
 )
 
+// Muxer represents an FFMPEG muxer
 type Muxer struct {
 	Rate int
 }
 
+// Mux muxes the input h264 file into an MP4 container.
 func (m Muxer) Mux(H264File string) (string, error) {
 	filenameMP4 := m.getFileNameMP4(H264File)
 	cmd := exec.Command(ffmpeg, m.buildParams(H264File, filenameMP4)...)
