@@ -13,7 +13,9 @@ import (
 )
 
 const (
-	helloMessageTemplate = "Welcome %s! 😃"
+	newSubscriberMessageTemplate = "Welcome %s! 😃"
+	unsubscribeMessageTemplate   = "Goodbye %s! 👋"
+	notAllowedUserTemplate       = "%s You Shall Not Pass! 🧙‍♂️"
 )
 
 type UserInfo struct {
@@ -25,6 +27,7 @@ type UserInfo struct {
 type Bot struct {
 	bot          *tgbotapi.BotAPI
 	allowedUsers map[int]UserInfo
+	activeUsers  map[int]UserInfo
 	updates      <-chan tgbotapi.Update
 	camera       camera.Camera
 }
@@ -34,7 +37,7 @@ func NewBot(tok string) (*Bot, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not create bot")
 	}
-	return &Bot{bot, make(map[int]UserInfo), nil, nil}, nil
+	return &Bot{bot, make(map[int]UserInfo), make(map[int]UserInfo), nil, nil}, nil
 }
 
 func NewBotWithCamera(tok string, cam camera.Camera) (*Bot, error) {
@@ -79,8 +82,8 @@ func (b *Bot) Start() error {
 }
 
 func (b *Bot) Send(m bot.Message) error {
-	for _, usrinfo := range b.allowedUsers {
-		err := b.handleMessage(m, usrinfo)
+	for _, usrinfo := range b.activeUsers {
+		err := b.handleMessage(m, int(usrinfo.chatID))
 		if err != nil {
 			return err
 		}
@@ -88,32 +91,32 @@ func (b *Bot) Send(m bot.Message) error {
 	return nil
 }
 
-func (b *Bot) SendTo(usr int, m bot.Message) error {
-	usrinfo := b.allowedUsers[usr]
-	return b.handleMessage(m, usrinfo)
+func (b *Bot) SendTo(chatID int, m bot.Message) error {
+	return b.handleMessage(m, chatID)
 }
 
-func (b *Bot) handleMessage(m bot.Message, usrinfo UserInfo) error {
+func (b *Bot) handleMessage(m bot.Message, chatID int) error {
+	chatID64 := int64(chatID)
 	switch m.Format {
 	case bot.TEXT:
-		msg := tgbotapi.NewMessage(usrinfo.chatID, string(m.Data))
+		msg := tgbotapi.NewMessage(chatID64, string(m.Data))
 		_, err := b.bot.Send(msg)
 		if err != nil {
-			return errors.Wrapf(err, "Could not send text message to %d", usrinfo.chatID)
+			return errors.Wrapf(err, "Could not send text message to %d", chatID64)
 		}
 	case bot.IMAGE:
-		msg := tgbotapi.NewPhotoUpload(usrinfo.chatID, string(m.Data))
+		msg := tgbotapi.NewPhotoUpload(chatID64, string(m.Data))
 		msg.Caption = string(m.Data)
 		_, err := b.bot.Send(msg)
 		if err != nil {
-			return errors.Wrapf(err, "Could not send photo message to %d", usrinfo.chatID)
+			return errors.Wrapf(err, "Could not send photo message to %d", chatID64)
 		}
 	case bot.VIDEO:
-		msg := tgbotapi.NewVideoNoteUpload(usrinfo.chatID, 480, string(m.Data))
+		msg := tgbotapi.NewVideoNoteUpload(chatID64, 480, string(m.Data))
 		msg.Duration = 10
 		_, err := b.bot.Send(msg)
 		if err != nil {
-			return errors.Wrapf(err, "Could not send video note message to %d", usrinfo.chatID)
+			return errors.Wrapf(err, "Could not send video note message to %d", chatID64)
 		}
 	}
 	return nil
@@ -127,54 +130,85 @@ func (b *Bot) updateHandler() {
 		switch u.Message.Text {
 		case "/subscribe":
 			if _, ok := b.allowedUsers[u.Message.From.ID]; ok {
-				b.allowedUsers[u.Message.From.ID] = UserInfo{
+				b.activeUsers[u.Message.From.ID] = UserInfo{
 					chatID:    u.Message.Chat.ID,
 					username:  u.Message.From.UserName,
 					firstName: u.Message.From.FirstName,
 					lastName:  u.Message.From.LastName,
 				}
-				greetings := ""
-				if u.Message.From.UserName != "" {
-					greetings = fmt.Sprintf(helloMessageTemplate, u.Message.From.UserName)
-				} else {
-					greetings = fmt.Sprintf(helloMessageTemplate, u.Message.From.FirstName+" "+u.Message.From.LastName)
-				}
-				b.Send(bot.Message{
-					Format: bot.TEXT,
-					Data:   []byte(greetings),
-				})
+				b.SendTo(
+					u.Message.From.ID,
+					bot.Message{
+						Format: bot.TEXT,
+						Data:   []byte(getUsrName(u.Message, newSubscriberMessageTemplate)),
+					})
+			} else {
+				b.SendTo(
+					u.Message.From.ID,
+					bot.Message{
+						Format: bot.TEXT,
+						Data:   []byte(getUsrName(u.Message, notAllowedUserTemplate)),
+					})
 			}
 		case "/picture":
 			if _, ok := b.allowedUsers[u.Message.From.ID]; ok {
 				filename, err := b.camera.Picture()
 				if err != nil {
-					b.Send(bot.Message{
-						Format: bot.TEXT,
-						Data:   []byte(err.Error()),
-					})
+					b.SendTo(
+						u.Message.From.ID,
+						bot.Message{
+							Format: bot.TEXT,
+							Data:   []byte(err.Error()),
+						})
 					return
 				}
-				b.SendTo(u.Message.From.ID, bot.Message{
-					Format: bot.IMAGE,
-					Data:   []byte(filename),
-				})
+				b.SendTo(
+					u.Message.From.ID,
+					bot.Message{
+						Format: bot.IMAGE,
+						Data:   []byte(filename),
+					})
 			}
 		case "/video":
 			if _, ok := b.allowedUsers[u.Message.From.ID]; ok {
 				filename, err := b.camera.Video()
 				if err != nil {
-					b.SendTo(u.Message.From.ID, bot.Message{
-						Format: bot.TEXT,
-						Data:   []byte(err.Error()),
-					})
+					b.SendTo(
+						u.Message.From.ID,
+						bot.Message{
+							Format: bot.TEXT,
+							Data:   []byte(err.Error()),
+						})
 					return
 				}
-				b.SendTo(u.Message.From.ID, bot.Message{
-					Format: bot.VIDEO,
-					Data:   []byte(filename),
-				})
+				b.SendTo(
+					u.Message.From.ID,
+					bot.Message{
+						Format: bot.VIDEO,
+						Data:   []byte(filename),
+					})
+			}
+		case "/unsubscribe":
+			if _, ok := b.allowedUsers[u.Message.From.ID]; ok {
+				b.SendTo(
+					u.Message.From.ID,
+					bot.Message{
+						Format: bot.TEXT,
+						Data:   []byte(getUsrName(u.Message, unsubscribeMessageTemplate)),
+					})
+				delete(b.activeUsers, u.Message.From.ID)
 			}
 		}
 		log.Printf("[%s] %s", u.Message.From.UserName, u.Message.Text)
 	}
+}
+
+func getUsrName(m *tgbotapi.Message, template string) string {
+	greetings := ""
+	if m.From.UserName != "" {
+		greetings = fmt.Sprintf(template, m.From.UserName)
+	} else {
+		greetings = fmt.Sprintf(template, m.From.FirstName+" "+m.From.LastName)
+	}
+	return greetings
 }
