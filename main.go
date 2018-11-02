@@ -44,7 +44,7 @@ func main() {
 		log.WithFields(log.Fields{"error": err}).Fatal("bot start")
 	}
 
-	for range outCh {
+	for m := range outCh {
 		tbot.Send(bot.Message{Format: bot.MessageFormat(m.Format), Data: m.Data})
 	}
 }
