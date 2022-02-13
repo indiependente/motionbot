@@ -16,5 +16,5 @@ github.com/technoweenie/multipartstreamer v1.0.1 h1:XRztA5MXiR1TIRHxH2uNxXxaIkKQ
 github.com/technoweenie/multipartstreamer v1.0.1/go.mod h1:jNVxdtShOxzAsukZwTSw6MDx5eUJoiEBsSvzDU9uzog=
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 h1:YyJpGZS1sBuBCzLAR1VEpK193GlqGZbnPFnPV/5Rsb4=
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-periph.io/x/periph v3.2.0+incompatible h1:+hOgsUzysU5kmjRv/kNf7ujbS2P+WsaVPGBwmJ/v+r8=
-periph.io/x/periph v3.2.0+incompatible/go.mod h1:EWr+FCIU2dBWz5/wSWeiIUJTriYv9v2j2ENBmgYyy7Y=
+periph.io/x/periph v3.6.8+incompatible h1:lki0ie6wHtvlilXhIkabdCUQMpb5QN4Fx33yNQdqnaA=
+periph.io/x/periph v3.6.8+incompatible/go.mod h1:EWr+FCIU2dBWz5/wSWeiIUJTriYv9v2j2ENBmgYyy7Y=

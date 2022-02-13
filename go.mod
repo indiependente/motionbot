@@ -5,7 +5,7 @@ require (
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/pkg/errors v0.8.0
 	github.com/sirupsen/logrus v1.8.1
-	periph.io/x/periph v3.2.0+incompatible
+	periph.io/x/periph v3.6.8+incompatible
 )
 
 require (
